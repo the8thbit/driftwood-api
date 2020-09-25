@@ -1,0 +1,22 @@
+{
+  "name": "driftwood-api",
+  "version": "0.1.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/the8thbit/driftwood-api.git"
+  },
+  "keywords": [
+    "driftwood"
+  ],
+  "author": "the8thbit",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/the8thbit/driftwood-api/issues"
+  },
+  "homepage": "https://github.com/the8thbit/driftwood-api#readme"
+}
