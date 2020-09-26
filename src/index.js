@@ -46,7 +46,7 @@ app.use(cors());
 app.use(morgan("combined"));
 
 app.get("/", (req, res) => {
-  res.status(200).send("It works!");
+  res.status(200).json("It works!");
 });
 
 app.post("/addSite", (req, res) => {
@@ -138,7 +138,7 @@ app.post("/dislikeSite", (req, res) => {
   res.status(200);
 });
 
-app.get("getRandomSite", (req, res) => {
+app.get("/getRandomSite", (req, res) => {
   //TODO: get random site from db weighted by views and score
 
   res.status(200).json({
@@ -146,7 +146,7 @@ app.get("getRandomSite", (req, res) => {
   });
 });
 
-app.get("getThreeRandomTags", (req, res) => {
+app.get("/getThreeRandomTags", (req, res) => {
   //TODO: get 3 random tags from db
 
   res.status(200).json({
@@ -154,7 +154,7 @@ app.get("getThreeRandomTags", (req, res) => {
   });
 });
 
-app.get("getTokenfieldAutocomplete", (req, res) => {
+app.get("/getTokenfieldAutocomplete", (req, res) => {
   const query = req.query.q;
 
   //TODO: get top 3 matching tags from DB, sorted by score
