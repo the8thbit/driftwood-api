@@ -1,3 +1,8 @@
+const dotenvFlow = require("dotenv-flow");
+const dotenvExpand = require("dotenv-expand");
+
+dotenvExpand(dotenvFlow.config());
+
 const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
@@ -7,7 +12,6 @@ const morgan = require("morgan");
 const normalizeUrl = require("normalize-url");
 
 const app = express();
-const port = 3000;
 
 const validURL = (str) => {
   var pattern = new RegExp(
@@ -164,6 +168,6 @@ app.get("/getTokenfieldAutocomplete", (req, res) => {
   // }));
 });
 
-app.listen(port, () => {
-  console.log(`listening at port ${port}`);
+app.listen(process.env.API_PORT, () => {
+  console.log(`listening at port ${process.env.API_PORT}`);
 });
