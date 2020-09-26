@@ -18,5 +18,8 @@
   "bugs": {
     "url": "https://github.com/the8thbit/driftwood-api/issues"
   },
-  "homepage": "https://github.com/the8thbit/driftwood-api#readme"
+  "homepage": "https://github.com/the8thbit/driftwood-api#readme",
+  "dependencies": {
+    "express": "^4.17.1"
+  }
 }
