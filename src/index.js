@@ -1,19 +1,27 @@
-const dotenvFlow = require("dotenv-flow");
-const dotenvExpand = require("dotenv-expand");
+const dotenvFlow = require('dotenv-flow');
+const dotenvExpand = require('dotenv-expand');
 
 dotenvExpand(dotenvFlow.config());
 
-const fs = require("fs");
-const https = require("https");
-const express = require("express");
-const bodyParser = require("body-parser");
-const cors = require("cors");
-const helmet = require("helmet");
-const morgan = require("morgan");
+const mysql = require('mysql')
+const fs = require('fs');
 
-const normalizeUrl = require("normalize-url");
+const express = require('express');
+const bodyParser = require('body-parser');
+const https = require('https');
+const cors = require('cors');
+const helmet = require('helmet');
+const morgan = require('morgan');
+
+const normalizeUrl = require('normalize-url');
 
 const app = express();
+const db = mysql.createConnection({
+  host: process.env.MYSQL_HOST,
+  user: process.env.MYSQL_USER,
+  password: process.env.MYSQL_PASS,
+  database: process.env.MYSQL_DB
+});
 
 const validURL = (str) => {
   let pattern = new RegExp(
@@ -45,14 +53,28 @@ const chooseWeighted = (items, chances) => {
   });
 }
 
-
 app.use(helmet());
 app.use(bodyParser.json());
 app.use(cors());
 app.use(morgan("combined"));
 
+
 app.get("/", (req, res) => {
   res.status(200).json("It works!");
+});
+
+app.get("/dbtest", (req, res) => {
+  const query = "SELECT table_name FROM information_schema.tables;";
+  db.query(query, function (error, results) {
+    if (error) {
+      console.log(JSON.stringify(error));
+      res.status(500).json({
+        error: 'Internal server error. Please try again later.'
+      });
+    } else {
+      res.status(200).json(results);
+    }
+  });
 });
 
 app.post("/addSite", (req, res) => {
@@ -170,6 +192,7 @@ app.get("/getTokenfieldAutocomplete", (req, res) => {
   // }));
 });
 
+
 const privateKey = fs.readFileSync(process.env.SSL_KEY);
 const  certificate = fs.readFileSync(process.env.SSL_CERT);
 
@@ -179,4 +202,3 @@ https.createServer({
 }, app).listen(process.env.API_PORT, () => {
   console.log(`listening at port ${process.env.API_PORT}`);
 });
-
