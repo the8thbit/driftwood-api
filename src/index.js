@@ -3,6 +3,8 @@ const dotenvExpand = require("dotenv-expand");
 
 dotenvExpand(dotenvFlow.config());
 
+const fs = require("fs");
+const https = require("https");
 const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
@@ -168,6 +170,13 @@ app.get("/getTokenfieldAutocomplete", (req, res) => {
   // }));
 });
 
-app.listen(process.env.API_PORT, () => {
+const privateKey = fs.readFileSync(process.env.SSL_KEY);
+const  certificate = fs.readFileSync(process.env.SSL_CERT);
+
+https.createServer({
+  key: privateKey,
+  cert: certificate
+}, app).listen(process.env.API_PORT, () => {
   console.log(`listening at port ${process.env.API_PORT}`);
 });
+
