@@ -18,6 +18,7 @@ const normalizeUrl = require('normalize-url');
 const app = express();
 const db = mysql.createConnection({
   host: process.env.MYSQL_HOST,
+  port: process.env.MYSQL_PORT,
   user: process.env.MYSQL_USER,
   password: process.env.MYSQL_PASS,
   database: process.env.MYSQL_DB
@@ -63,8 +64,8 @@ app.get("/", (req, res) => {
   res.status(200).json("It works!");
 });
 
-app.get("/dbtest", (req, res) => {
-  const query = "SELECT table_name FROM information_schema.tables;";
+app.get("/db", (req, res) => {
+  const query = 'SELECT "Database works!";';
   db.query(query, function (error, results) {
     if (error) {
       console.log(JSON.stringify(error));
