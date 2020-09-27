@@ -16,7 +16,8 @@ const morgan = require('morgan');
 const normalizeUrl = require('normalize-url');
 
 const app = express();
-const db = mysql.createConnection({
+const db = mysql.createPool({
+  connectionLimit: process.env.MYSQL_POOL_SIZE,
   host: process.env.MYSQL_HOST,
   port: process.env.MYSQL_PORT,
   user: process.env.MYSQL_USER,
