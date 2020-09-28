@@ -52,19 +52,24 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 passport.serializeUser((user, done) => { done(null, user) });
-passport.deserializeUser((user, done) => { done(null, user); });
+passport.deserializeUser((user, done) => { done(null, user) });
 
-passport.use(
-  new passportLocal((username, password, done) => {
-    if (username === "test@gmail.com" && password === "1234") {
-      return done(null, { username: "test@gmail.com" });
-    } else {
-      return done(null, false);
-    }
-  })
-);
+passport.use('local-login', new passportLocal((username, password, done) => {
+  const query = "SELECT * FROM `users` WHERE `username` = ? AND `password` = ?";
+  connection.query(query, [username, password], (err, rows) => {
+    if (err) { return done(err); }
+    if (!rows.length) { return done(null, false); }
+    return done(null, rows[0]);
+  });
+}));
 
-
+const isLoggedIn = (req, res, next) => {
+  if (req.isAuthenticated()) {
+    return next();
+  } else {
+    return res.status(401).json();
+  }
+};
 
 const validURL = (str) => {
   let pattern = new RegExp(
@@ -96,14 +101,6 @@ const chooseWeighted = (items, chances) => {
   });
 }
 
-const isLoggedIn = (req, res, next) => {
-  if (req.isAuthenticated()) {
-    return next();
-  } else {
-    return res.status(401).json();
-  }
-}
-
 
 app.get("/", (req, res) => {
   res.status(200).json("It works!");
@@ -123,8 +120,8 @@ app.get("/db", (req, res) => {
   });
 });
 
-app.post("/login", passport.authenticate("local"), (req, res) => {
-  res.status(200).json();
+app.post('/login', passport.authenticate('local-login'), (req, res) => {
+  res.status(200).json(req.user);
 });
 
 app.get('/logout', isLoggedIn, (req, res) => {
