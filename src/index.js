@@ -63,7 +63,7 @@ passport.use('local-login', new passportLocal((username, password, done) => {
     bcrypt.compare(password, rows[0].hashword, (err, res) => {
       if (err) { return done(err); }
       if (!res) { return done(null, false); }
-      return done(null, rows[0].username);
+      return done(null, rows[0]);
     });
   });
 }));
@@ -83,7 +83,7 @@ passport.use('local-signup', new passportLocal((username, password, done) => {
           const getInsertedRowQuery = 'SELECT * FROM `users` WHERE `id` = ?';
           db.query(getInsertedRowQuery, [rows.insertId], (err, rows) => {
             if (err) { return done(err); }
-            return done(null, rows[0].username);
+            return done(null, rows[0]);
           });
         });
       });
@@ -149,11 +149,11 @@ app.get("/db", (req, res) => {
 });
 
 app.post('/signup', passport.authenticate('local-signup'), (req, res) => {
-  res.status(200).json(req.user);
+  res.status(200).json(req.user.username);
 });
 
 app.post('/login', passport.authenticate('local-login'), (req, res) => {
-  res.status(200).json(req.user);
+  res.status(200).json(req.user.username);
 });
 
 app.get('/logout', isLoggedIn, (req, res) => {
