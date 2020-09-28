@@ -73,15 +73,18 @@ passport.use('local-signup', new passportLocal((username, password, done) => {
   db.query(checkUserExistsQuery, [username], (err, rows) => {
     if (err) { return done(err); }
     if (rows.length) { return done(null, false); }
-    bcrypt.hash(password, process.env.BCRYPT_SALT_ROUNDS, (err, hashword) => {
+    bcrypt.genSalt(process.env.BCRYPT_SALT_ROUNDS, function (err, salt) {
       if (err) { return done(err); }
-      const insertUserQuery = 'INSERT INTO `users` (username, hashword) values (?, ?)';
-      db.query(insertUserQuery, [username, hashword], (err, rows) => {
+      bcrypt.hash(password, salt, (err, hashword) => {
         if (err) { return done(err); }
-        const getInsertedRowQuery = 'SELECT * FROM `users` WHERE `id` = ?';
-        db.query(getInsertedRowQuery, [rows.insertId], (err, rows) => {
+        const insertUserQuery = 'INSERT INTO `users` (username, hashword) values (?, ?)';
+        db.query(insertUserQuery, [username, hashword], (err, rows) => {
           if (err) { return done(err); }
-          return done(null, rows[0].username);
+          const getInsertedRowQuery = 'SELECT * FROM `users` WHERE `id` = ?';
+          db.query(getInsertedRowQuery, [rows.insertId], (err, rows) => {
+            if (err) { return done(err); }
+            return done(null, rows[0].username);
+          });
         });
       });
     });
