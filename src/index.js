@@ -79,7 +79,7 @@ passport.use('local-signup', new passportLocal((username, password, done) => {
       db.query(getInsertedRowQuery, [rows.insertId], (err, rows) => {
         if (err) { return done(err); }
         return done(null, rows[0]);
-      }
+      });
     });
   });
 }));
