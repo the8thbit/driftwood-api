@@ -1,29 +1,53 @@
 const dotenvFlow = require('dotenv-flow');
 const dotenvExpand = require('dotenv-expand');
-
-dotenvExpand(dotenvFlow.config());
+const dotenvParse = require('dotenv-parse-variables');
+dotenvParse(dotenvExpand(dotenvFlow.config()));
 
 const mysql = require('mysql')
 const fs = require('fs');
 
 const express = require('express');
+const session = require("express-session");
 const bodyParser = require('body-parser');
 const https = require('https');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 
+const passport = require("passport");
+const passportLocal = require("passport-local").Strategy;
+
 const normalizeUrl = require('normalize-url');
 
-const app = express();
+
 const db = mysql.createPool({
   connectionLimit: process.env.MYSQL_POOL_SIZE,
   host: process.env.MYSQL_HOST,
   port: process.env.MYSQL_PORT,
   user: process.env.MYSQL_USER,
   password: process.env.MYSQL_PASS,
-  database: process.env.MYSQL_DB
+  database: process.env.MYSQL_DB,
 });
+
+const app = express();
+
+app.use(morgan("combined"));
+app.use(bodyParser.json());
+app.use(helmet());
+app.use(cors());
+
+app.use(session({
+  secret: process.env.SESSION_SECRET,
+  resave: process.env.SESSION_RESAVE,
+  saveUninitialized: process.env.SESSION_SAVE_UNINIT,
+  cookie: {
+    secure: process.env.SESSION_COOKIE_SECURE
+  }
+}));
+
+app.use(passport.initialize());
+app.use(passport.session());
+
 
 const validURL = (str) => {
   let pattern = new RegExp(
@@ -55,11 +79,6 @@ const chooseWeighted = (items, chances) => {
   });
 }
 
-app.use(helmet());
-app.use(bodyParser.json());
-app.use(cors());
-app.use(morgan("combined"));
-
 
 app.get("/", (req, res) => {
   res.status(200).json("It works!");
@@ -78,6 +97,20 @@ app.get("/db", (req, res) => {
     }
   });
 });
+
+app.post("/login", passport.authenticate("local"), (req, res) => {
+  res.status(200).json(req.user.username);
+});
+
+passport.use(
+  new passportLocal((username, password, done) => {
+    if (username === "test@gmail.com" && password === "1234") {
+      return done(null, { username: "test@gmail.com" });
+    } else {
+      return done(null, false);
+    }
+  })
+);
 
 app.post("/addSite", (req, res) => {
   let body = JSON.parse(req.body);
