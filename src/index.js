@@ -3,8 +3,9 @@ const dotenvExpand = require('dotenv-expand');
 const dotenvParse = require('dotenv-parse-variables');
 dotenvParse(dotenvExpand(dotenvFlow.config()));
 
-const mysql = require('mysql')
 const fs = require('fs');
+const bcrypt = require('bcrypt')
+const mysql = require('mysql');
 
 const express = require('express');
 const session = require("express-session");
@@ -55,30 +56,34 @@ passport.serializeUser((user, done) => { done(null, user) });
 passport.deserializeUser((user, done) => { done(null, user) });
 
 passport.use('local-login', new passportLocal((username, password, done) => {
-  const query = 'SELECT * FROM `users` WHERE `username` = ? AND `password` = ?';
-  db.query(query, [username, password], (err, rows) => {
+  if (err) { return done(err); }
+  const query = 'SELECT * FROM `users` WHERE `username` = ?';
+  db.query(query, [username], (err, rows) => {
     if (err) { return done(err); }
     if (!rows.length) { return done(null, false); }
-    return done(null, rows[0]);
+    bcrypt.compare(password, rows[0].hashword, (err, res) => {
+      if (err) { return done(err); }
+      if (!res) { return done(null, false); }
+      return done(null, rows[0].username);
+    });
   });
 }));
 
 passport.use('local-signup', new passportLocal((username, password, done) => {
-  const checkUserExistsQuery =
-    'SELECT * FROM `users` WHERE `username` = ?'
-  ;
+  const checkUserExistsQuery ='SELECT * FROM `users` WHERE `username` = ?';
   db.query(checkUserExistsQuery, [username], (err, rows) => {
     if (err) { return done(err); }
     if (rows.length) { return done(null, false); }
-    const insertUserQuery =
-      'INSERT INTO `users` (username, password) values (?, ?)'
-    ;
-    db.query(insertUserQuery, [username, password], (err, rows) => {
+    bcrypt.hash(password, process.env.BCRYPT_SALT_ROUNDS, (err, hashword) => {
       if (err) { return done(err); }
-      const getInsertedRowQuery = 'SELECT * FROM `users` WHERE `id` = ?';
-      db.query(getInsertedRowQuery, [rows.insertId], (err, rows) => {
+      const insertUserQuery = 'INSERT INTO `users` (username, hashword) values (?, ?)';
+      db.query(insertUserQuery, [username, hashword], (err, rows) => {
         if (err) { return done(err); }
-        return done(null, rows[0]);
+        const getInsertedRowQuery = 'SELECT * FROM `users` WHERE `id` = ?';
+        db.query(getInsertedRowQuery, [rows.insertId], (err, rows) => {
+          if (err) { return done(err); }
+          return done(null, rows[0].username);
+        });
       });
     });
   });
