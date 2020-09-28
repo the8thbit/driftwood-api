@@ -56,7 +56,6 @@ passport.serializeUser((user, done) => { done(null, user) });
 passport.deserializeUser((user, done) => { done(null, user) });
 
 passport.use('local-login', new passportLocal((username, password, done) => {
-  if (err) { return done(err); }
   const query = 'SELECT * FROM `users` WHERE `username` = ?';
   db.query(query, [username], (err, rows) => {
     if (err) { return done(err); }
