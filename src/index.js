@@ -55,11 +55,32 @@ passport.serializeUser((user, done) => { done(null, user) });
 passport.deserializeUser((user, done) => { done(null, user) });
 
 passport.use('local-login', new passportLocal((username, password, done) => {
-  const query = "SELECT * FROM `users` WHERE `username` = ? AND `password` = ?";
+  const query = 'SELECT * FROM `users` WHERE `username` = ? AND `password` = ?';
   db.query(query, [username, password], (err, rows) => {
     if (err) { return done(err); }
     if (!rows.length) { return done(null, false); }
     return done(null, rows[0]);
+  });
+}));
+
+passport.use('local-signup', new passportLocal((username, password, done) => {
+  const checkUserExistsQuery =
+    'SELECT * FROM `users` WHERE `username` = ?'
+  ;
+  db.query(checkUserExistsQuery, [username], (err, rows) => {
+    if (err) { return done(err); }
+    if (rows.length) { return done(null, false); }
+    const insertUserQuery =
+      'INSERT INTO `users` (username, password) values (?, ?)'
+    ;
+    db.query(insertUserQuery, [username, password], (err, rows) => {
+      if (err) { return done(err); }
+      const getInsertedRowQuery = 'SELECT * FROM `users` WHERE `id` = ?';
+      db.query(getInsertedRowQuery, [rows.insertId], (err, rows) => {
+        if (err) { return done(err); }
+        return done(null, rows[0]);
+      }
+    });
   });
 }));
 
@@ -118,6 +139,10 @@ app.get("/db", (req, res) => {
       res.status(200).json(results);
     }
   });
+});
+
+app.post('/signup', passport.authenticate('local-signup'), (req, res) => {
+  res.status(200).json(req.user);
 });
 
 app.post('/login', passport.authenticate('local-login'), (req, res) => {
