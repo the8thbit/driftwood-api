@@ -8,6 +8,7 @@ const fs = require('fs');
 
 const express = require('express');
 const session = require("express-session");
+const mySqlStore = require("express-mysql-session")(session);
 const bodyParser = require('body-parser');
 const https = require('https');
 const cors = require('cors');
@@ -28,6 +29,7 @@ const db = mysql.createPool({
   password: process.env.MYSQL_PASS,
   database: process.env.MYSQL_DB,
 });
+const sessionStore = new mySqlStore({}, db);
 
 const app = express();
 
@@ -37,6 +39,7 @@ app.use(helmet());
 app.use(cors());
 
 app.use(session({
+  store: sessionStore,
   secret: process.env.SESSION_SECRET,
   resave: process.env.SESSION_RESAVE,
   saveUninitialized: process.env.SESSION_SAVE_UNINIT,
@@ -47,6 +50,20 @@ app.use(session({
 
 app.use(passport.initialize());
 app.use(passport.session());
+
+passport.serializeUser((user, done) => { done(null, user) });
+passport.deserializeUser((user, done) => { done(null, user); });
+
+passport.use(
+  new passportLocal((username, password, done) => {
+    if (username === "test@gmail.com" && password === "1234") {
+      return done(null, { username: "test@gmail.com" });
+    } else {
+      return done(null, false);
+    }
+  })
+);
+
 
 
 const validURL = (str) => {
@@ -79,6 +96,14 @@ const chooseWeighted = (items, chances) => {
   });
 }
 
+const isLoggedIn = (req, res, next) => {
+  if (req.isAuthenticated()) {
+    return next();
+  } else {
+    return res.status(401).json();
+  }
+}
+
 
 app.get("/", (req, res) => {
   res.status(200).json("It works!");
@@ -99,18 +124,17 @@ app.get("/db", (req, res) => {
 });
 
 app.post("/login", passport.authenticate("local"), (req, res) => {
-  res.status(200).json(req.user.username);
+  res.status(200).json();
 });
 
-passport.use(
-  new passportLocal((username, password, done) => {
-    if (username === "test@gmail.com" && password === "1234") {
-      return done(null, { username: "test@gmail.com" });
-    } else {
-      return done(null, false);
-    }
-  })
-);
+app.get('/logout', isLoggedIn, (req, res) => {
+  req.logout();
+  res.status(200).json();
+});
+
+app.get('/auth', isLoggedIn, (req, res) => {
+  res.status(200).json(`Auth for ${req.user.username} works!`);
+});
 
 app.post("/addSite", (req, res) => {
   let body = JSON.parse(req.body);
@@ -184,12 +208,12 @@ app.post("/addSite", (req, res) => {
 });
 
 app.post("/likeSite", (req, res) => {
-  let body = JSON.parse(req.body);
+  let body = req.body;
   let address = body.address;
 
   // TODO: add like site functionality
 
-  res.status(200);
+  res.status(200).json("It works!");
 });
 
 app.post("/dislikeSite", (req, res) => {
