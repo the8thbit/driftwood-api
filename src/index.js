@@ -73,7 +73,7 @@ passport.use('local-signup', new passportLocal((username, password, done) => {
   db.query(checkUserExistsQuery, [username], (err, rows) => {
     if (err) { return done(err); }
     if (rows.length) { return done(null, false); }
-    bcrypt.genSalt(process.env.BCRYPT_SALT_ROUNDS, function (err, salt) {
+    bcrypt.genSalt(Number(process.env.BCRYPT_SALT_ROUNDS), (err, salt) => {
       if (err) { return done(err); }
       bcrypt.hash(password, salt, (err, hashword) => {
         if (err) { return done(err); }
