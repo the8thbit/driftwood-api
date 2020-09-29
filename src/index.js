@@ -6,6 +6,7 @@ dotenvParse(dotenvExpand(dotenvFlow.config()));
 const fs = require('fs');
 const bcrypt = require('bcrypt')
 const mysql = require('mysql');
+const sql = require('./sql.js');
 
 const express = require('express');
 const session = require("express-session");
@@ -56,8 +57,7 @@ passport.serializeUser((user, done) => { done(null, user) });
 passport.deserializeUser((user, done) => { done(null, user) });
 
 passport.use('local-login', new passportLocal((username, password, done) => {
-  const query = 'SELECT * FROM `users` WHERE `username` = ?';
-  db.query(query, [username], (err, rows) => {
+  db.query(sql.getUsersByUsername, [username], (err, rows) => {
     if (err) { return done(err); }
     if (!rows.length) { return done(null, false); }
     bcrypt.compare(password, rows[0].hashword, (err, res) => {
@@ -69,26 +69,24 @@ passport.use('local-login', new passportLocal((username, password, done) => {
 }));
 
 passport.use('local-signup', new passportLocal((username, password, done) => {
-  const checkUserExistsQuery ='SELECT * FROM `users` WHERE `username` = ?';
-  db.query(checkUserExistsQuery, [username], (err, rows) => {
+  db.query(sql.getUsersByUsername, [username], (err, rows) => {
     if (err) { return done(err); }
     if (rows.length) { return done(null, false); }
     bcrypt.genSalt(Number(process.env.BCRYPT_SALT_ROUNDS), (err, salt) => {
       if (err) { return done(err); }
       bcrypt.hash(password, salt, (err, hashword) => {
         if (err) { return done(err); }
-        const insertUserQuery = 'INSERT INTO `users` (username, hashword) values (?, ?)';
-        db.query(insertUserQuery, [username, hashword], (err, rows) => {
-          if (err) { return done(err); }
-          const getInsertedRowQuery = 'SELECT * FROM `users` WHERE `id` = ?';
-          db.query(getInsertedRowQuery, [rows.insertId], (err, rows) => {
+        db.query(sql.addUsersWithLocalCreds, [username, hashword], (err, rows) => {
             if (err) { return done(err); }
-            return done(null, rows[0]);
+            db.query(sql.getUsersById, [rows.insertId], (err, rows) => {
+              if (err) { return done(err); }
+              return done(null, rows[0]);
+            });
           });
         });
       });
-    });
-  });
+    }
+  );
 }));
 
 const isLoggedIn = (req, res, next) => {
@@ -135,8 +133,7 @@ app.get("/", (req, res) => {
 });
 
 app.get("/db", (req, res) => {
-  const query = 'SELECT "Database works!";';
-  db.query(query, function (error, results) {
+  db.query(sql.helloWorld, function (error, results) {
     if (error) {
       console.log(JSON.stringify(error));
       res.status(500).json({
