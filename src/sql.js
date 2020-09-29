@@ -1,6 +1,6 @@
 const fs = require('fs');
 
-const sqlPath = './sql'
+const sqlPath = 'src/sql'
 
 const getSqlStr = (sqlFilePath) => {
     return fs.readFileSync(`${sqlPath}/${sqlFilePath}.sql`).toString();
