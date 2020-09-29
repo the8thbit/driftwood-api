@@ -76,7 +76,7 @@ passport.use('local-signup', new passportLocal((username, password, done) => {
       if (err) { return done(err); }
       bcrypt.hash(password, salt, (err, hashword) => {
         if (err) { return done(err); }
-        db.query(sql.addUsersWithLocalCreds, [username, hashword], (err, rows) => {
+        db.query(sql.addUserWithLocalCreds, [username, hashword], (err, rows) => {
             if (err) { return done(err); }
             db.query(sql.getUsersById, [rows.insertId], (err, rows) => {
               if (err) { return done(err); }
