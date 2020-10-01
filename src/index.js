@@ -5,7 +5,7 @@ const dotenvExpand = require('dotenv-expand');
 dotenvExpand(dotenvFlow.config());
 
 const fs = require('fs');
-const bcrypt = require('bcrypt')
+const bcrypt = require('bcrypt');
 const mysql = require('mysql');
 
 const express = require('express');
