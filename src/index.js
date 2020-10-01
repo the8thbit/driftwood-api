@@ -1,12 +1,12 @@
+const ENV = require("getenv");
+
 const dotenvFlow = require('dotenv-flow');
 const dotenvExpand = require('dotenv-expand');
-const dotenvParse = require('dotenv-parse-variables');
-dotenvParse(dotenvExpand(dotenvFlow.config()));
+dotenvExpand(dotenvFlow.config());
 
 const fs = require('fs');
 const bcrypt = require('bcrypt')
 const mysql = require('mysql');
-const sql = require('./sql.js');
 
 const express = require('express');
 const session = require("express-session");
@@ -22,14 +22,16 @@ const passportLocal = require("passport-local").Strategy;
 
 const normalizeUrl = require('normalize-url');
 
+const sql = require("./sql.js");
+
 
 const db = mysql.createPool({
-  connectionLimit: process.env.MYSQL_POOL_SIZE,
-  host: process.env.MYSQL_HOST,
-  port: process.env.MYSQL_PORT,
-  user: process.env.MYSQL_USER,
-  password: process.env.MYSQL_PASS,
-  database: process.env.MYSQL_DB,
+  connectionLimit: ENV.int('MYSQL_POOL_SIZE'),
+  host: ENV.string('MYSQL_HOST'),
+  port: ENV.int('MYSQL_PORT'),
+  user: ENV.string('MYSQL_USER'),
+  password: ENV.string('MYSQL_PASS'),
+  database: ENV.string('MYSQL_DB')
 });
 const sessionStore = new mySqlStore({}, db);
 
@@ -40,15 +42,17 @@ app.use(bodyParser.json());
 app.use(helmet());
 app.use(cors());
 
-app.use(session({
-  store: sessionStore,
-  secret: process.env.SESSION_SECRET,
-  resave: process.env.SESSION_RESAVE,
-  saveUninitialized: process.env.SESSION_SAVE_UNINIT,
-  cookie: {
-    secure: process.env.SESSION_COOKIE_SECURE
-  }
-}));
+app.use(
+  session({
+    store: sessionStore,
+    secret: ENV.string('SESSION_SECRET'),
+    resave: ENV.bool('SESSION_RESAVE'),
+    saveUninitialized: ENV.bool('SESSION_SAVE_UNINIT'),
+    cookie: {
+      secure: ENV.bool('SESSION_COOKIE_SECURE'),
+    },
+  })
+);
 
 app.use(passport.initialize());
 app.use(passport.session());
@@ -72,7 +76,7 @@ passport.use('local-signup', new passportLocal((username, password, done) => {
   db.query(sql.getUsersByUsername, [username], (err, rows) => {
     if (err) { return done(err); }
     if (rows.length) { return done(null, false); }
-    bcrypt.genSalt(Number(process.env.BCRYPT_SALT_ROUNDS), (err, salt) => {
+    bcrypt.genSalt(ENV.int('BCRYPT_SALT_ROUNDS'), (err, salt) => {
       if (err) { return done(err); }
       bcrypt.hash(password, salt, (err, hashword) => {
         if (err) { return done(err); }
@@ -277,13 +281,15 @@ app.get("/getTokenfieldAutocomplete", (req, res) => {
   // }));
 });
 
-
-const privateKey = fs.readFileSync(process.env.SSL_KEY);
-const  certificate = fs.readFileSync(process.env.SSL_CERT);
-
-https.createServer({
-  key: privateKey,
-  cert: certificate
-}, app).listen(process.env.API_PORT, () => {
-  console.log(`listening at port ${process.env.API_PORT}`);
-});
+if (ENV.bool('SSL_ENABLED')) {
+  https.createServer({
+    key: fs.readFileSync(ENV.string('SSL_KEY')),
+    cert: fs.readFileSync(ENV.string('SSL_CERT'))
+  }, app).listen(ENV.int('API_PORT'), () => {
+    console.log(`listening at port ${ENV.int('API_PORT')}`);
+  });
+} else {
+  app.listen(ENV.int('API_PORT'), () => {
+    console.log(`listening at port ${ENV.int('API_PORT')}`);
+  });
+}
