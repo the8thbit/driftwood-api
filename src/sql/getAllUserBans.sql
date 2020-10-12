@@ -1,0 +1,1 @@
+SELECT * FROM `user_bans` WHERE enabled = 1 ORDER BY sort ASC;

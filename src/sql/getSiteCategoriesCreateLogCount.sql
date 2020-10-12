@@ -1,0 +1,1 @@
+SELECT COUNT(*) AS total_rows FROM `site_categories` WHERE enabled = 1;

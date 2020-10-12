@@ -1,7 +1,7 @@
 SELECT
     *
 FROM
-    `users`
+    `sites`
 WHERE
     `id` = ?
 ;

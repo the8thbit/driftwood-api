@@ -1,0 +1,1 @@
+SELECT * FROM `user_roles` WHERE id = ? AND enabled = 1;

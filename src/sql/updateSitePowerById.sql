@@ -1,0 +1,1 @@
+CALL update_site_power(?);

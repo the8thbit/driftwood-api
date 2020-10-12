@@ -1,0 +1,1 @@
+SELECT COUNT(*) AS total_rows FROM `events_site_flags` WHERE mod_queued = 1;

@@ -1,0 +1,1 @@
+SELECT * FROM `user_roles` WHERE enabled = 1 ORDER BY sort ASC;

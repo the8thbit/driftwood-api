@@ -1,0 +1,1 @@
+SELECT COUNT(*) AS total_rows FROM `sites` WHERE mod_queued = 1;

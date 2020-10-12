@@ -1,0 +1,1 @@
+SELECT * FROM `site_flags` WHERE enabled = 1 ORDER BY sort ASC;
